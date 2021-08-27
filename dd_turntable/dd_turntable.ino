@@ -9,6 +9,7 @@
 #define M_ST 5
 #define M_DR 4
 #define PW_SW 8
+#define SP_SW 9
 
 bool start = false;
 bool clock_start = false;
@@ -21,7 +22,7 @@ boolean toggle1 = 0;
 long setspeed = 0;
 long startspeed = 65000;
 long currentspeed = startspeed;
-float acc_rate = 0.005;
+float acc_rate = 0.008;
 float acc_pow = 20;
 long rpm33speed = 8960;
 long rpm45speed = 6632;
@@ -37,6 +38,7 @@ void setup() {
   pinMode(M_DR, OUTPUT);
   pinMode(M_EN, OUTPUT);
   pinMode(PW_SW, INPUT_PULLUP);
+  pinMode(SP_SW, INPUT_PULLUP);
   digitalWrite(M_EN, HIGH);
   digitalWrite(M_DR, HIGH);
   start=false;
@@ -82,12 +84,16 @@ void loop() {
     if(start) {
       stop_motor();
     } else {
-      setspeed = rpm33speed;
+      check_speed_sw();
       start_motor();
     }
     delay(500);
   }
   sw_state = sw_read;
+
+  if(start) {
+    check_speed_sw(); //Update speed setting to match speed switch.
+  }
 
   handle_acc();
   delay(50);
@@ -105,6 +111,14 @@ void loop() {
         stop_motor();
     }
   }
+}
+
+void check_speed_sw() {
+  if(digitalRead(SP_SW)) {
+        setspeed = rpm33speed;
+      } else {
+        setspeed = rpm45speed;
+      }
 }
 
 void start_motor() {
